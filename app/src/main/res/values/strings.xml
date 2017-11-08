@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SimplePhotoCloud</string>
+    <string name="button_name">Take a picture and send it to the server</string>
+</resources>
