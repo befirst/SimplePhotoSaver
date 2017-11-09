@@ -17,18 +17,12 @@ public interface AccessInterface {
 
     String Base_URL = "https://android-cources.simbirsoft1.com/api/";
 
-    String HEADERS =
-            "Authorization: Basic NTlkZGI5YmFhNGJlMjA1ODZkMjYwZWExOjUzOWRiOTdkNmQ=" +
-                    "X-Api-Factory-Application-Id: 59ddb9baa4be20586d260ea1" +
-                    "Content-Type: application/json";
-
     @Headers({
             "X-Api-Factory-Application-Id:59ddb9baa4be20586d260ea1",
-            "Authorization:Basic NTlkZGI5YmFhNGJlMjA1ODZkMjYwZWExOjUzOWRiOTdkNmQ=",
-            //"Content-Type: multipart/form-data"
+            "Authorization:Basic NTlkZGI5YmFhNGJlMjA1ODZkMjYwZWExOjUzOWRiOTdkNmQ="
     })
     @Multipart
     @POST("db/photo")
-    Call<ResponseBody> uploadImage(/*@Part MultipartBody.Part file,*/ @Part MultipartBody.Part progress);
+    Call<ResponseBody> uploadImage(@Part MultipartBody.Part data, @Part("name") RequestBody name);
 }
 

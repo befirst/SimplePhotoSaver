@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SimplePhotoCloud.iml" filepath="$PROJECT_DIR$/SimplePhotoCloud.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SimplePhotoSaver.iml" filepath="$PROJECT_DIR$/SimplePhotoSaver.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

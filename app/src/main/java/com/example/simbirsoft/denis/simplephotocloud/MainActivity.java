@@ -1,8 +1,7 @@
 package com.example.simbirsoft.denis.simplephotocloud;
 
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
@@ -10,8 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -36,13 +35,17 @@ import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity implements ProgressRequestBody.UploadCallbacks {
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final String myTag = "MY_TAG";
 
     @BindView(R.id.button_takeAndSend)
     Button buttonTakeAndSend;
     @BindView(R.id.progressBar_loadPercentage)
     ProgressBar loaderProgress;
+    @BindView(R.id.imageView_imageFromCache)
+    ImageView imageFromCache;
 
     File photoFile = null;
+    Uri photoUri = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,14 +66,19 @@ public class MainActivity extends AppCompatActivity implements ProgressRequestBo
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             try {
                 photoFile = createPictureInCache();
+                printMyLog("File was created: " + photoFile.getPath());
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
             if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
+                photoUri = FileProvider.getUriForFile(this,
                         "com.example.android.fileprovider",
                         photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+
+                printMyLog("Uri was created: " + photoUri.getPath());
+
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
         }
@@ -79,11 +87,7 @@ public class MainActivity extends AppCompatActivity implements ProgressRequestBo
     private File createPictureInCache() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ROOT).format(new Date());
         String imageFileName = "TEMP_" + timeStamp + "_";
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                getApplicationContext().getCacheDir()    /* directory */
-        );
+        File image = new File(getCacheDir(), imageFileName + ".jpg");
         return image;
     }
 
@@ -91,29 +95,21 @@ public class MainActivity extends AppCompatActivity implements ProgressRequestBo
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            //Bundle extras = data.getExtras();
-            //if ((extras != null) && (extras.containsKey(MediaStore.EXTRA_OUTPUT))) {
-                //try {
-                    //File picture = new File(getRealPathFromURI((Uri)extras.getParcelable(MediaStore.EXTRA_OUTPUT)));
-                    sendPictureToServer(photoFile);
-                //} catch (Exception e) {
-                   // e.printStackTrace();
-               // }
-            //}
+            printMyLog("Request code = OK");
+            imageFromCache.setImageBitmap(BitmapFactory.decodeFile(photoFile.getAbsolutePath()));
+            printMyLog("File pathName from Uri: " + photoFile.getAbsolutePath());
+            sendPictureToServer(photoFile);
         }
     }
 
     private void sendPictureToServer(File file) {
-        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-        MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
-        //RequestBody description = RequestBody.create(MultipartBody.FORM, "TRARATATATARATATA");
-
-        ProgressRequestBody progress = new ProgressRequestBody(file, this);
-        MultipartBody.Part progressPart = MultipartBody.Part.createFormData("image", file.getName(), progress);
+        RequestBody name = RequestBody.create(MediaType.parse("text/plain"), file.getName());
 
         AccessInterface api = createRestService();
-        Call<ResponseBody> response = api.uploadImage(body); //, progressPart);
+        Call<ResponseBody> response = api.uploadImage(body, name); //, progressPart);
         response.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -135,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements ProgressRequestBo
         });
     }
 
-    private void showToast(String param){
+    private void showToast(String param) {
         Toast.makeText(getApplicationContext(), param, Toast.LENGTH_LONG).show();
     }
 
@@ -171,5 +167,9 @@ public class MainActivity extends AppCompatActivity implements ProgressRequestBo
     @Override
     public void onFinish() {
 
+    }
+
+    private void printMyLog(String message) {
+        Log.d(myTag, message);
     }
 }
